@@ -2427,7 +2427,6 @@ if (navButtons.length) inline_keyboard.push(navButtons);
   // Hanya tombol developer dan Donate yang tetap
   inline_keyboard.push([
     { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
-    { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
 ]);
   
 return { inline_keyboard };
@@ -2495,7 +2494,6 @@ async function handleCallbackQuery(bot, callbackQuery, options = {}) {
           inline_keyboard: [
             [
     { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
-    { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
 ],
             [backToMenuButton]
           ]
@@ -2507,7 +2505,6 @@ async function handleCallbackQuery(bot, callbackQuery, options = {}) {
         inline_keyboard: [
           [
     { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
-    { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
 ],
           [backToMenuButton]
         ]
@@ -2566,7 +2563,6 @@ function getMenuKeyboard(page = 0) {
     // Hanya tombol developer dan Donate yang tetap di setiap halaman
     keyboard.push([
         { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
-        { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
     ]);
 
     return { inline_keyboard: keyboard };
@@ -2708,7 +2704,6 @@ To check the proxy status, send the search results directly to this bot.
     ],
     [
         { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
-        { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
     ]
 ]
             };
@@ -2896,7 +2891,6 @@ To check the proxy status, send the search results directly to this bot.
                 ],
                 [
                     { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
-                    { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
                 ]
             ]
         };
@@ -3013,62 +3007,6 @@ To check the proxy status, send the search results directly to this bot.
       return new Response("OK", { status: 200 });
     }
     
-    if (/^\/donate(@\w+)?$/.test(text)) {
-      const imageUrl = "https://github.com/jaka1m/project/raw/main/BAYAR.jpg";
-    
-    try {
-        await this.sendPhoto(chatId, imageUrl, {
-            caption: `
-  *Support Bot Development!*  
-
-Help us continue to grow by scanning the QRIS above!
-
-  *Upcoming Features:*
- Faster servers
- More proxy countries
- Exclusive premium features
- Regular updates and bug fixes
-
-Thank you for your support!  
-
-_ GEO BOT SERVER Team_
-`.trim(),
-            parse_mode: "Markdown",
-            reply_markup: {
-    inline_keyboard: [
-        [
-            { 
-                text: "👤 GEO PROJECT", 
-                url: "https://t.me/sampiiiiu" 
-            },
-            { 
-                text: "📢 Channel", 
-                url: "https://t.me/testikuy_mang" 
-            }
-        ],
-        [
-            backToMenuButton
-        ]
-    ]
-},
-reply_to_message_id: messageId,
-...options
-});
-        
-    } catch (error) {
-        console.error(" Error sending donation photo:", error);
-        // Fallback to text message if image fails
-        await this.sendMessage(chatId, 
-            `  *Support Bot Development!*\n\n` +
-            `Help us continue to grow with a donation via QRIS.\n\n` +
-            `Thank you for your support!  \n\n` +
-            ` [GEO PROJECT](https://t.me/sampiiiiu)`,
-            { parse_mode: "Markdown", reply_to_message_id: messageId, ...options }
-        );
-    }
-    
-    return new Response("OK", { status: 200 });
-    }
     
     if (/^\/stats(@\w+)?$/.test(text)) {
   const targetMessageId = menuMessageIds.get(chatId) || messageId;
