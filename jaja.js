@@ -2086,7 +2086,7 @@ async function randomconfig() {
     if (!ip || !port) {
       return "⚠️ Incomplete IP or Port data from proxy list.";
     }
-    const checkResponse = await fetch(`https://geovpn.vercel.app/check?ip=${ip}:${port}`);
+    const checkResponse = await fetch(`https://api.sampi.workers.dev/check?ip=${ip}:${port}`);
     if (!checkResponse.ok) {
       return `⚠️ Failed to check status for IP ${ip}:${port}.`;
     }
@@ -2241,7 +2241,7 @@ async function rotateconfig(chatId, text, options = {}) {
       return;
     }
     
-    const statusResponse = await fetch(`https://geovpn.vercel.app/check?ip=${ip}:${port}`);
+    const statusResponse = await fetch(`https://api.sampi.workers.dev/check?ip=${ip}:${port}`);
     if (!statusResponse.ok) {
       throw new Error(`Status check failed! status: ${statusResponse.status}`);
     }
@@ -3197,7 +3197,7 @@ const WILDCARD_OPTIONS = Object.entries(WILDCARD_MAP).map(
   ([value, text]) => ({ text, value })
 );
 const DEFAULT_HOST = "joss.dus.biz.id";
-const API_URL = "https://geovpn.vercel.app/check?ip=";
+const API_URL = "https://api.sampi.workers.dev/check?ip=";
 async function fetchIPData(ip, port) {
   try {
     const response = await fetch(`${API_URL}${encodeURIComponent(ip)}:${encodeURIComponent(port)}`);
@@ -3532,7 +3532,7 @@ Pilih protokol:`;
 };
 
 // src/proxyip/proxyip.js
-const APIKU = "https://geovpn.vercel.app/check?ip=";
+const APIKU = "https://api.sampi.workers.dev/check?ip=";
 const DEFAULT_HOST2 = "joss.dus.biz.id";
 const sentMessages = new Map();
 const paginationState = new Map();
