@@ -2066,96 +2066,125 @@ function generateUUID() {
     return v.toString(16);
   });
 }
+
 async function randomconfig() {
   try {
     const HOSTKU2 = "joss.dus.biz.id";
     const GITHUB_BASE_URL = "https://raw.githubusercontent.com/jaka2m/botak/main/cek/";
+    
+    // Fetch proxy list
     const proxyResponse = await fetch(`${GITHUB_BASE_URL}proxyList.txt`);
     if (!proxyResponse.ok) {
       return "⚠️ Failed to fetch proxy list.";
     }
+
     const ipText = await proxyResponse.text();
     const ipLines = ipText.split("\n").filter((line) => line.trim() !== "");
+    
     if (ipLines.length === 0) {
       return "⚠️ Proxy list is empty or invalid.";
     }
+
+    // Select random proxy
     const randomIndex = Math.floor(Math.random() * ipLines.length);
     const randomProxyLine = ipLines[randomIndex];
     const sequenceNumber = randomIndex + 1;
+
     const [ip, port, country, provider] = randomProxyLine.split(",");
+    
     if (!ip || !port) {
       return "⚠️ Incomplete IP or Port data from proxy list.";
     }
-    const checkResponse = await fetch(`https://api.sampi.workers.dev/check?ip=${ip}:${port}`);
+
+    // Check proxy status
+    const checkResponse = await fetch(`https://api.jas.biz.id/check?ip=${ip}:${port}`);
     if (!checkResponse.ok) {
-      return `⚠️ Failed to check status for IP ${ip}:${port}.`;
+      return `⚠️ DEAD to check status for IP ${ip}:${port}.`;
     }
+
     const text = await checkResponse.text();
     let data;
+    
     try {
       data = JSON.parse(text);
     } catch (e) {
-        return `⚠️ Failed to parse response from server for IP ${ip}:${port}. Response: ${text}`;
+      return `⚠️ Failed to parse response from server for IP ${ip}:${port}. Response: ${text}`;
     }
-    if (data.status?.toUpperCase() !== "ACTIVE") {
-      return `⚠️ IP ${ip}:${port} is not active.`;
+
+    // Check if proxy is active
+    if (data.status !== "ACTIVE") {
+      return `⚠️ IP ${ip}:${port} is not active. Status: ${data.status || 'UNKNOWN'}`;
     }
+
+    const status = data.status === "ACTIVE" ? "✅ ACTIVE" : "❌ DEAD";
+    
+    // Generate paths
     const pathIPPORT = `/Free-VPN-CF-Geo-Project/${ip}=${port}`;
-    const pathCD = `/Free-VPN-CF-Geo-Project/${data.countryCode}${sequenceNumber}`;
-    const toBase642 = (str) => {
-      if (typeof btoa === "function") {
-        return btoa(unescape(encodeURIComponent(str)));
-      } else if (typeof Buffer !== "undefined") {
-        return Buffer.from(str, "utf-8").toString("base64");
-      } else {
-        return encodeURIComponent(str);
-      }
-    };
+    const pathCD = `/Free-VPN-CF-Geo-Project/${data.country}${sequenceNumber}`;
+
+    // Generate UUIDs and passwords
+    const vlessUUID = generateUUID();
+    const trojanUUID = generateUUID();
+    const ssPassword = generateUUID();
+
+    // Information message
     const infoMessage = `
 IP      : ${data.ip}
 PORT    : ${data.port}
 ISP     : ${data.isp}
 COUNTRY : ${data.country}
 DELAY   : ${data.delay}
-STATUS  : ${data.status}
+STATUS  : ${status}
 `;
-    const vlessUUID = generateUUID();
-    const trojanUUID = generateUUID();
-    const ssPassword = generateUUID();
-    const vlessTLSLink1 = `vless://${vlessUUID}@${HOSTKU2}:443?encryption=none&security=tls&sni=${HOSTKU2}&fp=randomized&type=ws&host=${HOSTKU2}&path=${encodeURIComponent(pathIPPORT)}#${encodeURIComponent(provider)}%20${encodeURIComponent(country)}`;
-    const trojanTLSLink1 = `trojan://${trojanUUID}@${HOSTKU2}:443?security=tls&sni=${HOSTKU2}&fp=randomized&type=ws&host=${HOSTKU2}&path=${encodeURIComponent(pathIPPORT)}#${encodeURIComponent(provider)}%20${encodeURIComponent(country)}`;
-    const ssTLSLink1 = `ss://${toBase642(`none:${ssPassword}`)}@${HOSTKU2}:443?encryption=none&type=ws&host=${HOSTKU2}&path=${encodeURIComponent(pathIPPORT)}&security=tls&sni=${HOSTKU2}#${encodeURIComponent(provider)}%20${encodeURIComponent(country)}`;
-    const vlessTLSLink2 = `vless://${vlessUUID}@${HOSTKU2}:443?encryption=none&security=tls&sni=${HOSTKU2}&fp=randomized&type=ws&host=${HOSTKU2}&path=${encodeURIComponent(pathCD)}#${encodeURIComponent(provider)}%20${encodeURIComponent(country)}`;
-    const trojanTLSLink2 = `trojan://${trojanUUID}@${HOSTKU2}:443?security=tls&sni=${HOSTKU2}&fp=randomized&type=ws&host=${HOSTKU2}&path=${encodeURIComponent(pathCD)}#${encodeURIComponent(provider)}%20${encodeURIComponent(country)}`;
-    const ssTLSLink2 = `ss://${toBase642(`none:${ssPassword}`)}@${HOSTKU2}:443?encryption=none&type=ws&host=${HOSTKU2}&path=${encodeURIComponent(pathCD)}&security=tls&sni=${HOSTKU2}#${encodeURIComponent(provider)}%20${encodeURIComponent(country)}`;
+
+    // Generate configuration links
+    const vlessTLSLink1 = `vless://${vlessUUID}@${HOSTKU2}:443?encryption=none&security=tls&sni=${HOSTKU2}&fp=randomized&type=ws&host=${HOSTKU2}&path=${encodeURIComponent(pathIPPORT)}#${encodeURIComponent(provider || 'Unknown')}%20${encodeURIComponent(country || 'Unknown')}`;
+    
+    const trojanTLSLink1 = `trojan://${trojanUUID}@${HOSTKU2}:443?security=tls&sni=${HOSTKU2}&fp=randomized&type=ws&host=${HOSTKU2}&path=${encodeURIComponent(pathIPPORT)}#${encodeURIComponent(provider || 'Unknown')}%20${encodeURIComponent(country || 'Unknown')}`;
+    
+    const ssTLSLink1 = `ss://${toBase64(`none:${ssPassword}`)}@${HOSTKU2}:443?encryption=none&type=ws&host=${HOSTKU2}&path=${encodeURIComponent(pathIPPORT)}&security=tls&sni=${HOSTKU2}#${encodeURIComponent(provider || 'Unknown')}%20${encodeURIComponent(country || 'Unknown')}`;
+
+    const vlessTLSLink2 = `vless://${vlessUUID}@${HOSTKU2}:443?encryption=none&security=tls&sni=${HOSTKU2}&fp=randomized&type=ws&host=${HOSTKU2}&path=${encodeURIComponent(pathCD)}#${encodeURIComponent(provider || 'Unknown')}%20${encodeURIComponent(country || 'Unknown')}`;
+    
+    const trojanTLSLink2 = `trojan://${trojanUUID}@${HOSTKU2}:443?security=tls&sni=${HOSTKU2}&fp=randomized&type=ws&host=${HOSTKU2}&path=${encodeURIComponent(pathCD)}#${encodeURIComponent(provider || 'Unknown')}%20${encodeURIComponent(country || 'Unknown')}`;
+    
+    const ssTLSLink2 = `ss://${toBase64(`none:${ssPassword}`)}@${HOSTKU2}:443?encryption=none&type=ws&host=${HOSTKU2}&path=${encodeURIComponent(pathCD)}&security=tls&sni=${HOSTKU2}#${encodeURIComponent(provider || 'Unknown')}%20${encodeURIComponent(country || 'Unknown')}`;
+
+    // Format final configuration text
     const configText = `
 \`\`\`INFORMATION
 ${infoMessage}
 \`\`\`
+
 \`\`\`VLESS-TLS
 ${vlessTLSLink1}
 \`\`\`
+
 \`\`\`TROJAN-TLS
 ${trojanTLSLink1}
 \`\`\`
+
 \`\`\`SHADOWSOCKS-TLS
 ${ssTLSLink1}
 \`\`\`
 
-(Country Code Path : ${data.countryCode}${sequenceNumber})
+(Country Code Path : ${data.country}${sequenceNumber})
 
 \`\`\`VLESS-TLS
 ${vlessTLSLink2}
 \`\`\`
+
 \`\`\`TROJAN-TLS
 ${trojanTLSLink2}
 \`\`\`
+
 \`\`\`SHADOWSOCKS-TLS
 ${ssTLSLink2}
 \`\`\`
 
-\u{1F468}\u200D\u{1F4BB} Developer : [GEO PROJECT](https://t.me/sampiiiiu)
+👨‍💻 Developer : [GEO PROJECT](https://t.me/sampiiiiu)
 `;
+
     return configText;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -2241,7 +2270,7 @@ async function rotateconfig(chatId, text, options = {}) {
       return;
     }
     
-    const statusResponse = await fetch(`https://api.sampi.workers.dev/check?ip=${ip}:${port}`);
+    const statusResponse = await fetch(`https://api.jas.biz.id/check?ip=${ip}:${port}`);
     if (!statusResponse.ok) {
       throw new Error(`Status check failed! status: ${statusResponse.status}`);
     }
@@ -2361,6 +2390,7 @@ ss://${toBase64(`none:${generateUUID()}`)}@${HOSTKU}:80?encryption=none&type=ws&
     await this.deleteMessage(chatId, loadingMessage.message_id || loadingMessage.result?.message_id);
   }
 }
+
 // src/randomip/randomip.js
 let globalIpList = [];
 let globalCountryCodes = [];
@@ -2368,16 +2398,21 @@ const menuMessageIds = new Map();
 const broadcastState = new Map();
 const awaitingAddList = new Map();
 const awaitingKuotaNumber = new Map();
+
+// HAPUS deklarasi backToMenuButton di sini dan pindahkan ke bagian yang tepat
+
 async function fetchProxyList(url) {
   const response = await fetch(url);
   const ipText = await response.text();
   const ipList = ipText.split("\n").map((line) => line.trim()).filter((line) => line !== "");
   return ipList;
 }
+
 function getFlagEmoji(code) {
   const OFFSET = 127397;
   return [...code.toUpperCase()].map((c) => String.fromCodePoint(c.charCodeAt(0) + OFFSET)).join("");
 }
+
 function buildCountryButtons(page = 0, pageSize = 15) {
   const start = page * pageSize;
   const end = start + pageSize;
@@ -2403,6 +2438,7 @@ if (navButtons.length) inline_keyboard.push(navButtons);
   
 return { inline_keyboard };
 }
+
 function generateCountryIPsMessage(ipList, countryCode) {
   const filteredIPs = ipList.filter((line) => line.split(",")[2] === countryCode);
   if (filteredIPs.length === 0) return null;
@@ -2422,6 +2458,7 @@ function generateCountryIPsMessage(ipList, countryCode) {
   msg += `\n\n_GEO PROJECT_`;
   return msg;
 }
+
 async function handleRandomIpCommand(bot, chatId, options = {}) {
   try {
     globalIpList = await fetchProxyList("https://raw.githubusercontent.com/paoandest/botak/refs/heads/main/cek/proxyList.txt");
@@ -2441,6 +2478,7 @@ async function handleRandomIpCommand(bot, chatId, options = {}) {
     await bot.sendMessage(chatId, `\u274C Gagal mengambil data IP: ${error.message}`, options);
   }
 }
+
 async function handleCallbackQuery(bot, callbackQuery, options = {}) {
   const chatId = callbackQuery.message.chat.id;
   const messageId = callbackQuery.message.message_id;
@@ -2468,7 +2506,7 @@ async function handleCallbackQuery(bot, callbackQuery, options = {}) {
     { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
     { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
 ],
-            [backToMenuButton]
+            [{ text: "🔙 Back to Menu", callback_data: "menu_page_0" }]
           ]
         },
         ...options
@@ -2480,7 +2518,7 @@ async function handleCallbackQuery(bot, callbackQuery, options = {}) {
     { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
     { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
 ],
-          [backToMenuButton]
+          [{ text: "🔙 Back to Menu", callback_data: "menu_page_0" }]
         ]
       };
       await bot.sendMessage(chatId, msg, {
@@ -2516,6 +2554,12 @@ const MENU_COMMANDS = [
     { text: "📢 Broadcast MSG", callback_data: "menu_cmd_broadcast" },
 ];
 
+// DEFINISI backToMenuButton YANG TEPAT - HANYA SATU KALI
+const backToMenuButton = { 
+    text: "🔙 Back to Menu", 
+    callback_data: "menu_page_0" 
+};
+
 function getMenuKeyboard(page = 0) {
     const itemsPerPage = 5;
     const start = page * itemsPerPage;
@@ -2541,6 +2585,12 @@ function getMenuKeyboard(page = 0) {
     ]);
 
     return { inline_keyboard: keyboard };
+}
+
+// Fungsi handleCallbackQuery2 untuk menangani callback lainnya
+async function handleCallbackQuery2(bot, callbackQuery, options = {}) {
+    // Implementasi fungsi handleCallbackQuery2 jika diperlukan
+    await bot.answerCallbackQuery(callbackQuery.id);
 }
 
 const TelegramBotku = class {
@@ -2589,7 +2639,7 @@ const TelegramBotku = class {
       const msg = update.message;
       if (msg.text && /^\/proxyip(@\w+)?$/.test(msg.text)) {
         const targetMessageId = menuMessageIds.get(msg.chat.id) || msg.message_id;
-        await handleProxyipCommand(this, msg, { ...options, reply_to_message_id: targetMessageId });
+        await handleRandomIpCommand(this, msg, { ...options, reply_to_message_id: targetMessageId });
       }
     }
     
@@ -2739,7 +2789,20 @@ reply_to_message_id: update.callback_query.message.message_id,
                     `Help us continue to grow with a donation via QRIS.\n\n` +
                     `Thank you for your support!  \n\n` +
                     ` [GEO PROJECT](https://t.me/sampiiiiu)`,
-                    { parse_mode: "Markdown", reply_to_message_id: update.callback_query.message.message_id, ...options }
+                    { 
+                        parse_mode: "Markdown", 
+                        reply_to_message_id: update.callback_query.message.message_id, 
+                        ...options,
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
+                                    { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
+                                ],
+                                [backToMenuButton]
+                            ]
+                        }
+                    }
                 );
             }
             break;
@@ -2828,10 +2891,13 @@ reply_to_message_id: update.callback_query.message.message_id,
               await this.sendMessage(
                 update.callback_query.message.chat.id,
                 `   Failed to fetch usage data.\n\n_Error:_ ${error.message}`,
-                { parse_mode: "Markdown", reply_to_message_id: update.callback_query.message.message_id, ...options,
-                  reply_markup: {
-                    inline_keyboard: [[backToMenuButton]]
-                  }
+                { 
+                    parse_mode: "Markdown", 
+                    reply_to_message_id: update.callback_query.message.message_id, 
+                    ...options,
+                    reply_markup: {
+                        inline_keyboard: [[backToMenuButton]]
+                    }
                 }
               );
             }
@@ -2840,7 +2906,14 @@ reply_to_message_id: update.callback_query.message.message_id,
             // For other commands, send a placeholder message
             await this.sendMessage(update.callback_query.message.chat.id, 
               `  *${command} feature is under development*\n\nThis feature is currently being developed. Please try again later.`,
-              { parse_mode: "Markdown", reply_to_message_id: update.callback_query.message.message_id, ...options }
+              { 
+                  parse_mode: "Markdown", 
+                  reply_to_message_id: update.callback_query.message.message_id, 
+                  ...options,
+                  reply_markup: {
+                      inline_keyboard: [[backToMenuButton]]
+                  }
+              }
             );
         }
         
@@ -2985,61 +3058,67 @@ To check the proxy status, send the search results directly to this bot.
     }
     
     if (/^\/donate(@\w+)?$/.test(text)) {
-      const imageUrl = "https://github.com/jaka1m/project/raw/main/BAYAR.jpg";
+    const imageUrl = "https://github.com/jaka1m/project/raw/main/BAYAR.jpg";
     
     try {
         await this.sendPhoto(chatId, imageUrl, {
             caption: `
-  *Support Bot Development!*  
+*Support Bot Development!*  
 
 Help us continue to grow by scanning the QRIS above!
 
-  *Upcoming Features:*
- Faster servers
- More proxy countries
- Exclusive premium features
- Regular updates and bug fixes
+*Upcoming Features:*
+Faster servers
+More proxy countries
+Exclusive premium features
+Regular updates and bug fixes
 
 Thank you for your support!  
 
-_ GEO BOT SERVER Team_
+_GEO BOT SERVER Team_
 `.trim(),
             parse_mode: "Markdown",
             reply_markup: {
-    inline_keyboard: [
-        [
-            { 
-                text: "👤 GEO PROJECT", 
-                url: "https://t.me/sampiiiiu" 
+                inline_keyboard: [
+                    [
+                        { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
+                        { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
+                    ],
+                    [backToMenuButton]
+                ]
             },
-            { 
-                text: "📢 Channel", 
-                url: "https://t.me/testikuy_mang" 
-            }
-        ],
-        [
-            backToMenuButton
-        ]
-    ]
-},
-reply_to_message_id: messageId,
-...options
-});
-        
+            reply_to_message_id: messageId,
+            ...options
+        });
+
+        return new Response("OK", { status: 200 });
     } catch (error) {
-        console.error(" Error sending donation photo:", error);
-        // Fallback to text message if image fails
+        console.error("Error sending donation photo:", error);
+        
+        // Fallback ke pesan text jika gagal kirim foto
         await this.sendMessage(chatId, 
-            `  *Support Bot Development!*\n\n` +
+            `*Support Bot Development!*\n\n` +
             `Help us continue to grow with a donation via QRIS.\n\n` +
-            `Thank you for your support!  \n\n` +
-            ` [GEO PROJECT](https://t.me/sampiiiiu)`,
-            { parse_mode: "Markdown", reply_to_message_id: messageId, ...options }
+            `Thank you for your support!\n\n` +
+            `_GEO BOT SERVER Team_`,
+            {
+                parse_mode: "Markdown",
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
+                            { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
+                        ],
+                        [backToMenuButton]
+                    ]
+                },
+                reply_to_message_id: messageId,
+                ...options
+            }
         );
+        return new Response("OK", { status: 200 });
     }
-    
-    return new Response("OK", { status: 200 });
-    }
+}
     
     if (/^\/stats(@\w+)?$/.test(text)) {
   const targetMessageId = menuMessageIds.get(chatId) || messageId;
@@ -3113,20 +3192,26 @@ usageText += `🔄 *Requests Harian:* ${dailyRequests}\n\n`;
 usageText += `📦 *Total Data:* ${totalDataTB} TB\n`;
 usageText += `🔄 *Total Requests:* ${totalRequests.toLocaleString()}`;
 
-    await this.sendMessage(chatId, usageText, { parse_mode: "Markdown", reply_to_message_id: targetMessageId, ...options,
-      reply_markup: {
-        inline_keyboard: [[backToMenuButton]]
-      } 
+    await this.sendMessage(chatId, usageText, { 
+        parse_mode: "Markdown", 
+        reply_to_message_id: targetMessageId, 
+        ...options,
+        reply_markup: {
+            inline_keyboard: [[backToMenuButton]]
+        } 
     });
     
   } catch (error) {
     await this.sendMessage(
       chatId,
       ` Gagal mengambil data pemakaian.\n\n_Error:_ ${error.message}`,
-      { parse_mode: "Markdown", reply_to_message_id: targetMessageId, ...options,
-        reply_markup: {
-          inline_keyboard: [[backToMenuButton]]
-        }
+      { 
+          parse_mode: "Markdown", 
+          reply_to_message_id: targetMessageId, 
+          ...options,
+          reply_markup: {
+              inline_keyboard: [[backToMenuButton]]
+          }
       }
     );
   }
@@ -3176,6 +3261,7 @@ usageText += `🔄 *Total Requests:* ${totalRequests.toLocaleString()}`;
   }
 };
 
+
 // src/checkip/cek.js
 const WILDCARD_MAP = {
   ava: "ava.game.naver.com",
@@ -3197,7 +3283,7 @@ const WILDCARD_OPTIONS = Object.entries(WILDCARD_MAP).map(
   ([value, text]) => ({ text, value })
 );
 const DEFAULT_HOST = "joss.dus.biz.id";
-const API_URL = "https://api.sampi.workers.dev/check?ip=";
+const API_URL = "https://api.jas.biz.id/check?ip=";
 async function fetchIPData(ip, port) {
   try {
     const response = await fetch(`${API_URL}${encodeURIComponent(ip)}:${encodeURIComponent(port)}`);
@@ -3402,7 +3488,7 @@ Please wait while it is being processed...
 `, options);
       const data = await fetchIPData(ip, port);
       if (!data) {
-        await this.editMessage(chatId, loadingMsg.result.message_id, `\u274C Gagal mengambil data untuk IP ${ip}:${port}`, options);
+        await this.editMessage(chatId, loadingMsg.result.message_id, `⚠️ DEAD to check status for IP ${ip}:${port}`, options);
         return new Response("OK", { status: 200 });
       }
       const { isp, country, delay, status } = data;
@@ -3411,8 +3497,8 @@ IP     : ${ip}
 PORT   : ${port}
 ISP    : ${isp}
 Negara: ${country || "-"}
-Penundaan  : ${delay || "-"}
 Status : ${status || "-"}
+Delay  : ${delay || "-"}
 \`\`\`
 Pilih protokol:`;
       await this.editMessage(chatId, loadingMsg.result.message_id, infoText, {
@@ -3450,7 +3536,7 @@ Please wait while it is being processed...
 `, options);
         const dataInfo = await fetchIPData(ip, port);
         if (!dataInfo) {
-          await this.editMessage(chatId, messageId, `\u274C Gagal mengambil data untuk IP ${ip}:${port}`, options);
+          await this.editMessage(chatId, messageId, `⚠️ DEAD to check status for IP ${ip}:${port}`, options);
           await this.deleteMessage(chatId, loadingMsg.result.message_id, options);
           return new Response("OK", { status: 200 });
         }
@@ -3479,7 +3565,7 @@ Please wait while it is being processed...
 `, options);
         const dataInfo = await fetchIPData(ip, port);
         if (!dataInfo) {
-          await this.editMessage(chatId, messageId, `\u274C Gagal mengambil data untuk IP ${ip}:${port}`, options);
+          await this.editMessage(chatId, messageId, `⚠️ DEAD to check status for IP ${ip}:${port}`, options);
           await this.deleteMessage(chatId, loadingMsg.result.message_id, options);
           return new Response("OK", { status: 200 });
         }
@@ -3502,7 +3588,7 @@ ${configText}
         const [_, ip, port] = parts;
         const dataInfo = await fetchIPData(ip, port);
         if (!dataInfo) {
-          await this.editMessage(chatId, messageId, `\u274C Gagal mengambil data untuk IP ${ip}:${port}`, options);
+          await this.editMessage(chatId, messageId, `⚠️ DEAD to check status for IP ${ip}:${port}`, options);
           return new Response("OK", { status: 200 });
         }
         const infoText = `\`\`\`INFORMATION
@@ -3532,7 +3618,7 @@ Pilih protokol:`;
 };
 
 // src/proxyip/proxyip.js
-const APIKU = "https://api.sampi.workers.dev/check?ip=";
+const APIKU = "https://api.jas.biz.id/check?ip=";
 const DEFAULT_HOST2 = "joss.dus.biz.id";
 const sentMessages = new Map();
 const paginationState = new Map();
@@ -4278,15 +4364,21 @@ const TelegramBot = class {
     
     const firstMessage = 'Pong!🏓';
     const secondMessage = `Latency: ${randomLatency}ms ${emoji}`;
-    const replyMarkup = {
+    const keyboard = {
         inline_keyboard: [
-            [{ text: "👨‍💻 Contact Developer", url: "https://t.me/sampiiiiu" }],
+            [
+                { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
+                { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
+            ],
             [backToMenuButton]
         ]
     };
     
-    await this.sendMessage(chatId, firstMessage, { reply_to_message_id: targetMessageId, ...options });
-    await this.sendMessage(chatId, secondMessage, { reply_markup: replyMarkup, reply_to_message_id: targetMessageId, ...options });
+    await this.sendMessage(chatId, firstMessage, { reply_to_message_id: targetMessageId });
+    await this.sendMessage(chatId, secondMessage, { 
+        reply_markup: keyboard, 
+        reply_to_message_id: targetMessageId 
+    });
     
     return new Response("OK", { status: 200 });
 }
