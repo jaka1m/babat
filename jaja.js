@@ -2390,7 +2390,6 @@ ss://${toBase64(`none:${generateUUID()}`)}@${HOSTKU}:80?encryption=none&type=ws&
     await this.deleteMessage(chatId, loadingMessage.message_id || loadingMessage.result?.message_id);
   }
 }
-
 // src/randomip/randomip.js
 let globalIpList = [];
 let globalCountryCodes = [];
@@ -2398,21 +2397,16 @@ const menuMessageIds = new Map();
 const broadcastState = new Map();
 const awaitingAddList = new Map();
 const awaitingKuotaNumber = new Map();
-
-// HAPUS deklarasi backToMenuButton di sini dan pindahkan ke bagian yang tepat
-
 async function fetchProxyList(url) {
   const response = await fetch(url);
   const ipText = await response.text();
   const ipList = ipText.split("\n").map((line) => line.trim()).filter((line) => line !== "");
   return ipList;
 }
-
 function getFlagEmoji(code) {
   const OFFSET = 127397;
   return [...code.toUpperCase()].map((c) => String.fromCodePoint(c.charCodeAt(0) + OFFSET)).join("");
 }
-
 function buildCountryButtons(page = 0, pageSize = 15) {
   const start = page * pageSize;
   const end = start + pageSize;
@@ -2438,7 +2432,6 @@ if (navButtons.length) inline_keyboard.push(navButtons);
   
 return { inline_keyboard };
 }
-
 function generateCountryIPsMessage(ipList, countryCode) {
   const filteredIPs = ipList.filter((line) => line.split(",")[2] === countryCode);
   if (filteredIPs.length === 0) return null;
@@ -2458,7 +2451,6 @@ function generateCountryIPsMessage(ipList, countryCode) {
   msg += `\n\n_GEO PROJECT_`;
   return msg;
 }
-
 async function handleRandomIpCommand(bot, chatId, options = {}) {
   try {
     globalIpList = await fetchProxyList("https://raw.githubusercontent.com/paoandest/botak/refs/heads/main/cek/proxyList.txt");
@@ -2478,7 +2470,6 @@ async function handleRandomIpCommand(bot, chatId, options = {}) {
     await bot.sendMessage(chatId, `\u274C Gagal mengambil data IP: ${error.message}`, options);
   }
 }
-
 async function handleCallbackQuery(bot, callbackQuery, options = {}) {
   const chatId = callbackQuery.message.chat.id;
   const messageId = callbackQuery.message.message_id;
@@ -2506,7 +2497,7 @@ async function handleCallbackQuery(bot, callbackQuery, options = {}) {
     { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
     { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
 ],
-            [{ text: "🔙 Back to Menu", callback_data: "menu_page_0" }]
+            [backToMenuButton]
           ]
         },
         ...options
@@ -2518,7 +2509,7 @@ async function handleCallbackQuery(bot, callbackQuery, options = {}) {
     { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
     { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
 ],
-          [{ text: "🔙 Back to Menu", callback_data: "menu_page_0" }]
+          [backToMenuButton]
         ]
       };
       await bot.sendMessage(chatId, msg, {
@@ -2554,12 +2545,6 @@ const MENU_COMMANDS = [
     { text: "📢 Broadcast MSG", callback_data: "menu_cmd_broadcast" },
 ];
 
-// DEFINISI backToMenuButton YANG TEPAT - HANYA SATU KALI
-const backToMenuButton = { 
-    text: "🔙 Back to Menu", 
-    callback_data: "menu_page_0" 
-};
-
 function getMenuKeyboard(page = 0) {
     const itemsPerPage = 5;
     const start = page * itemsPerPage;
@@ -2585,12 +2570,6 @@ function getMenuKeyboard(page = 0) {
     ]);
 
     return { inline_keyboard: keyboard };
-}
-
-// Fungsi handleCallbackQuery2 untuk menangani callback lainnya
-async function handleCallbackQuery2(bot, callbackQuery, options = {}) {
-    // Implementasi fungsi handleCallbackQuery2 jika diperlukan
-    await bot.answerCallbackQuery(callbackQuery.id);
 }
 
 const TelegramBotku = class {
@@ -2639,7 +2618,7 @@ const TelegramBotku = class {
       const msg = update.message;
       if (msg.text && /^\/proxyip(@\w+)?$/.test(msg.text)) {
         const targetMessageId = menuMessageIds.get(msg.chat.id) || msg.message_id;
-        await handleRandomIpCommand(this, msg, { ...options, reply_to_message_id: targetMessageId });
+        await handleProxyipCommand(this, msg, { ...options, reply_to_message_id: targetMessageId });
       }
     }
     
@@ -2789,20 +2768,7 @@ reply_to_message_id: update.callback_query.message.message_id,
                     `Help us continue to grow with a donation via QRIS.\n\n` +
                     `Thank you for your support!  \n\n` +
                     ` [GEO PROJECT](https://t.me/sampiiiiu)`,
-                    { 
-                        parse_mode: "Markdown", 
-                        reply_to_message_id: update.callback_query.message.message_id, 
-                        ...options,
-                        reply_markup: {
-                            inline_keyboard: [
-                                [
-                                    { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
-                                    { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
-                                ],
-                                [backToMenuButton]
-                            ]
-                        }
-                    }
+                    { parse_mode: "Markdown", reply_to_message_id: update.callback_query.message.message_id, ...options }
                 );
             }
             break;
@@ -2891,13 +2857,10 @@ reply_to_message_id: update.callback_query.message.message_id,
               await this.sendMessage(
                 update.callback_query.message.chat.id,
                 `   Failed to fetch usage data.\n\n_Error:_ ${error.message}`,
-                { 
-                    parse_mode: "Markdown", 
-                    reply_to_message_id: update.callback_query.message.message_id, 
-                    ...options,
-                    reply_markup: {
-                        inline_keyboard: [[backToMenuButton]]
-                    }
+                { parse_mode: "Markdown", reply_to_message_id: update.callback_query.message.message_id, ...options,
+                  reply_markup: {
+                    inline_keyboard: [[backToMenuButton]]
+                  }
                 }
               );
             }
@@ -2906,14 +2869,7 @@ reply_to_message_id: update.callback_query.message.message_id,
             // For other commands, send a placeholder message
             await this.sendMessage(update.callback_query.message.chat.id, 
               `  *${command} feature is under development*\n\nThis feature is currently being developed. Please try again later.`,
-              { 
-                  parse_mode: "Markdown", 
-                  reply_to_message_id: update.callback_query.message.message_id, 
-                  ...options,
-                  reply_markup: {
-                      inline_keyboard: [[backToMenuButton]]
-                  }
-              }
+              { parse_mode: "Markdown", reply_to_message_id: update.callback_query.message.message_id, ...options }
             );
         }
         
@@ -3058,67 +3014,61 @@ To check the proxy status, send the search results directly to this bot.
     }
     
     if (/^\/donate(@\w+)?$/.test(text)) {
-    const imageUrl = "https://github.com/jaka1m/project/raw/main/BAYAR.jpg";
+      const imageUrl = "https://github.com/jaka1m/project/raw/main/BAYAR.jpg";
     
     try {
         await this.sendPhoto(chatId, imageUrl, {
             caption: `
-*Support Bot Development!*  
+  *Support Bot Development!*  
 
 Help us continue to grow by scanning the QRIS above!
 
-*Upcoming Features:*
-Faster servers
-More proxy countries
-Exclusive premium features
-Regular updates and bug fixes
+  *Upcoming Features:*
+ Faster servers
+ More proxy countries
+ Exclusive premium features
+ Regular updates and bug fixes
 
 Thank you for your support!  
 
-_GEO BOT SERVER Team_
+_ GEO BOT SERVER Team_
 `.trim(),
             parse_mode: "Markdown",
             reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
-                        { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
-                    ],
-                    [backToMenuButton]
-                ]
+    inline_keyboard: [
+        [
+            { 
+                text: "👤 GEO PROJECT", 
+                url: "https://t.me/sampiiiiu" 
             },
-            reply_to_message_id: messageId,
-            ...options
-        });
-
-        return new Response("OK", { status: 200 });
-    } catch (error) {
-        console.error("Error sending donation photo:", error);
-        
-        // Fallback ke pesan text jika gagal kirim foto
-        await this.sendMessage(chatId, 
-            `*Support Bot Development!*\n\n` +
-            `Help us continue to grow with a donation via QRIS.\n\n` +
-            `Thank you for your support!\n\n` +
-            `_GEO BOT SERVER Team_`,
-            {
-                parse_mode: "Markdown",
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            { text: "👨‍💻 Developer", url: "https://t.me/sampiiiiu" },
-                            { text: "❤️ Donate", callback_data: "menu_cmd_donate" }
-                        ],
-                        [backToMenuButton]
-                    ]
-                },
-                reply_to_message_id: messageId,
-                ...options
+            { 
+                text: "📢 Channel", 
+                url: "https://t.me/testikuy_mang" 
             }
+        ],
+        [
+            backToMenuButton
+        ]
+    ]
+},
+reply_to_message_id: messageId,
+...options
+});
+        
+    } catch (error) {
+        console.error(" Error sending donation photo:", error);
+        // Fallback to text message if image fails
+        await this.sendMessage(chatId, 
+            `  *Support Bot Development!*\n\n` +
+            `Help us continue to grow with a donation via QRIS.\n\n` +
+            `Thank you for your support!  \n\n` +
+            ` [GEO PROJECT](https://t.me/sampiiiiu)`,
+            { parse_mode: "Markdown", reply_to_message_id: messageId, ...options }
         );
-        return new Response("OK", { status: 200 });
     }
-}
+    
+    return new Response("OK", { status: 200 });
+    }
     
     if (/^\/stats(@\w+)?$/.test(text)) {
   const targetMessageId = menuMessageIds.get(chatId) || messageId;
@@ -3192,26 +3142,20 @@ usageText += `🔄 *Requests Harian:* ${dailyRequests}\n\n`;
 usageText += `📦 *Total Data:* ${totalDataTB} TB\n`;
 usageText += `🔄 *Total Requests:* ${totalRequests.toLocaleString()}`;
 
-    await this.sendMessage(chatId, usageText, { 
-        parse_mode: "Markdown", 
-        reply_to_message_id: targetMessageId, 
-        ...options,
-        reply_markup: {
-            inline_keyboard: [[backToMenuButton]]
-        } 
+    await this.sendMessage(chatId, usageText, { parse_mode: "Markdown", reply_to_message_id: targetMessageId, ...options,
+      reply_markup: {
+        inline_keyboard: [[backToMenuButton]]
+      } 
     });
     
   } catch (error) {
     await this.sendMessage(
       chatId,
       ` Gagal mengambil data pemakaian.\n\n_Error:_ ${error.message}`,
-      { 
-          parse_mode: "Markdown", 
-          reply_to_message_id: targetMessageId, 
-          ...options,
-          reply_markup: {
-              inline_keyboard: [[backToMenuButton]]
-          }
+      { parse_mode: "Markdown", reply_to_message_id: targetMessageId, ...options,
+        reply_markup: {
+          inline_keyboard: [[backToMenuButton]]
+        }
       }
     );
   }
@@ -3260,7 +3204,6 @@ usageText += `🔄 *Total Requests:* ${totalRequests.toLocaleString()}`;
     return response.json();
   }
 };
-
 
 // src/checkip/cek.js
 const WILDCARD_MAP = {
