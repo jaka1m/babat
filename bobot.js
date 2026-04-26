@@ -1535,21 +1535,19 @@ Kirimkan link konfigurasi V2Ray dan saya akan mengubahnya ke format:
     // Handler untuk konversi link
     if (text.includes("://")) {
       try {
-        const links = text.split("\n")
-          .map(line => line.trim())
-          .filter(line => line.includes("://"))
-          .slice(0, 10);
+        const lines = text.split("\n").map(line => line.trim()).filter(line => line !== "");
+        const allowedPrefixes = ["vless://", "vmess://", "trojan://", "ss://"];
+
+        // Pastikan semua baris adalah link yang valid dan diawali prefix yang diperbolehkan
+        const isEveryLineValid = lines.every(line => allowedPrefixes.some(p => line.startsWith(p)));
+
+        if (!isEveryLineValid) {
+          return new Response("OK", { status: 200 });
+        }
+
+        const links = lines.slice(0, 10);
         
         if (links.length === 0) {
-          await this.sendMessage(
-            chatId, 
-            " *Tidak Ada Link Valid*\n\nTidak ditemukan link yang dapat diproses. Pastikan format link sesuai:\n\n `vless://...`\n `vmess://...`\n `trojan://...`\n `ss://...`",
-            { 
-              parse_mode: "Markdown",
-              reply_to_message_id: messageId, 
-              ...options 
-            }
-          );
           return new Response("OK", { status: 200 });
         }
         
@@ -3326,6 +3324,9 @@ const TelegramProxyCekBot = class {
         return new Response("OK", { status: 200 });
       }
       const ip = ipPortMatch ? ipPortMatch[1] : ipOnlyMatch[1];
+      if (ip.startsWith("0")) {
+        return new Response("OK", { status: 200 });
+      }
       const port = ipPortMatch ? ipPortMatch[2] : "443";
       await this.deleteMessage(chatId, messageId, options);
       await this.sendChatAction(chatId, "typing", options);
@@ -4368,6 +4369,9 @@ const CekkuotaBotku = class {
   }
 
   async _handleQuotaCheck(chatId, number, targetMessageId, options) {
+    if (!number.startsWith("0")) {
+      return;
+    }
     const phoneRegex = /^08[1-9][0-9]{7,10}$/;
     if (!phoneRegex.test(number)) {
       await this.sendMessage(chatId,
@@ -4543,6 +4547,10 @@ const CekkuotaBotku = class {
     } : {};
 
     if (awaitingKuotaNumber.has(chatId) && text && !text.startsWith("/")) {
+      if (!text.startsWith("0")) {
+        awaitingKuotaNumber.delete(chatId);
+        return new Response("OK", { status: 200 });
+      }
       awaitingKuotaNumber.delete(chatId);
       const number = text;
       const targetMessageId = menuMessageIds.get(chatId) || msg.message_id;
@@ -4561,6 +4569,10 @@ const CekkuotaBotku = class {
     if (/^\/kuota(@\w+)?/.test(text)) {
       const args = text.split(" ");
       const number = args[1];
+
+      if (number && !number.startsWith("0")) {
+        return new Response("OK", { status: 200 });
+      }
 
       if (!number) {
         const targetMessageId = menuMessageIds.get(chatId) || msg.message_id;
