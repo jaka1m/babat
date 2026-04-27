@@ -2200,8 +2200,9 @@ async function randomconfig() {
     const status = data.status === "ACTIVE" ? "✅ ACTIVE" : "❌ DEAD";
     
     // Generate paths
+    const countryCode = (country || data.country || "XX").trim().toUpperCase();
     const pathIPPORT = `/Free-VPN-CF-Geo-Project/${ip}=${port}`;
-    const pathCD = `/Free-VPN-CF-Geo-Project/${data.country}${sequenceNumber}`;
+    const pathCD = `/Free-VPN-CF-Geo-Project/${countryCode}${sequenceNumber}`;
 
     // Generate UUIDs and passwords
     const vlessUUID = generateUUID();
@@ -2245,7 +2246,7 @@ ${ssTLSLink1}
 
 ${generateVMessConfigString(ip, port, `${provider || 'Unknown'} ${country || 'Unknown'}`)}
 
-(Country Code Path : ${data.country}${sequenceNumber})
+(Country Code Path : ${countryCode}${sequenceNumber})
 
 \`\`\`VLESS-TLS
 ${vlessTLSLink2}
